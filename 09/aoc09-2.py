@@ -22,7 +22,8 @@ labels, poo = ndimage.label(heightmap != 9)
 #  [0 3 3 3 3 3 0 4 0 2]
 #  [3 3 3 3 3 0 4 4 4 0]
 #  [0 3 0 0 0 4 4 4 4 4]] 
-print(numpy.bincount(labels.flatten())[1:])
+
+# Count the number of each int value in the above map.
 sizes = sorted(numpy.bincount(labels.flatten())[1:]) # Throw away the count of 0s, we don't care.
 
 print (sizes[-1] * sizes[-2] * sizes[-3])
