@@ -1,7 +1,7 @@
 import networkx
 from networkx.classes.function import path_weight
 
-with open("data.sample.txt", "r") as fh:
+with open("data.txt", "r") as fh:
     inputs = [i.strip() for i in fh.readlines()]
 
 height, width = len(inputs),len(inputs[0])
@@ -15,12 +15,12 @@ for metax in range(repeats[0]):
             for y in range(height):
                 newx = x + (metax * width)
                 newy = y + (metay * height)
-                for succ in graph.successors((newx, newy)):
+                for pred in graph.predecessors((newx, newy)):
                     val = (int(inputs[y][x])) + metaval
                     
                     while val > 9:
                         val -= 9
-                    graph.edges[(newx, newy),succ]["weight"] = val
+                    graph.edges[pred, (newx, newy)]["weight"] = val
 
 class color:
    PURPLE = '\033[95m'
@@ -34,21 +34,20 @@ class color:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
-path = networkx.shortest_path(graph, source=(0,0), target=((repeats[0] * width) - 1,(repeats[1] * height) - 1), weight="weight")
+path = networkx.shortest_path(graph, source=(0,0), target=((repeats[0] * width) - 1, (repeats[1] * height) - 1), weight="weight", method="dijkstra")
 
 for y in range(repeats[1] * height):
     for x in range(repeats[1] * width ):
-        for succ in graph.successors((x, y)):
+        for pred in graph.predecessors((x, y)):
             if (x, y) in path:
                 print(color.BOLD, end="")
 
-            print(graph.edges[(x,y),succ]["weight"], end="")
+            print(graph.edges[pred, (x,y)]["weight"], end="")
             if (x, y) in path:
                 print(color.END, end="")
                 
             break
     print(" ")
-
 
 nx_weight = path_weight(graph, path, "weight")
 print(len(path), " hops, weight:", nx_weight)
