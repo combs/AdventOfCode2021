@@ -66,7 +66,7 @@ def parse_sub_packets(bits, offset=0, packet_max=9999999):
             cursor += 5
             # print("cursor loc:",cursor)
             packet = {"version": version, "start": packetstart, "end": cursor - 1, "start_abs": packetstart + offset, "end_abs": cursor - 1 + offset, "type": packettype, "value": value }
-            print("found literal:",packet)
+            # print("found literal:",packet)
             packets.append(packet)
 
         else:
@@ -79,34 +79,35 @@ def parse_sub_packets(bits, offset=0, packet_max=9999999):
                 # print(bits[cursor:cursor+11])
                 subpacket_length = intify_bits(bits[cursor:cursor+11])
                 cursor += 11
-                print("expected subpacket length in packets:",subpacket_length)
+                # print("expected subpacket length in packets:",subpacket_length)
                 packet["length_subpackets"] = subpacket_length
                 
                 new_subpackets = parse_sub_packets(bits[cursor:], offset=offset+cursor, packet_max=subpacket_length)
-                print("resulting raw subpackets:", new_subpackets)
+                # print("resulting raw subpackets:", new_subpackets)
                 if len(new_subpackets) < subpacket_length:
                     raise ValueError("expected " + str(subpacket_length) + " packets, got " + str(len(new_subpackets)) + " packets in " + str(new_subpackets) + ", current offset " + str(offset + cursor))
                 # print("got subpackets:", new_subpackets)
                 if len(new_subpackets) > 0:
                     new_subpackets = new_subpackets[0:subpacket_length]
                     subpackets.extend(new_subpackets)
-                    print("filtered subpackets:", new_subpackets)
-                    print("cursor", cursor, "max end", get_max_end(new_subpackets), ", will increase cursor by", get_max_end(new_subpackets) + 1 )
+                    # print("filtered subpackets:", new_subpackets)
+                    # print("cursor", cursor, "max end", get_max_end(new_subpackets), ", will increase cursor by", get_max_end(new_subpackets) + 1 )
                     cursor += (get_max_end(new_subpackets)) + 1
                 else:
                     cursor += 18
-                    print("strange, 0 subpackets specified...")
+                    raise ValueError("A 0-length subpacket was specified")
+                    # print("strange, 0 subpackets specified...")
 
             else:    
                 subpacket_length = intify_bits(bits[cursor:cursor+15])
                 cursor += 15
-                print("expected subpacket length in bits:",subpacket_length)
+                # print("expected subpacket length in bits:",subpacket_length)
                 if subpacket_length==0:
-                    print("strange, 0 bits specified...")
+                    raise ValueError("A 0-bit subpacket was specified")
                 else:
                     packet["length_subpacket_bits"] = subpacket_length
                     subpackets.extend(parse_sub_packets(bits[cursor:cursor+subpacket_length], offset=offset+cursor))
-                    print("got subpackets:", subpackets)
+                    # print("got subpackets:", subpackets)
                     cursor += subpacket_length 
             packet.update({"version": version, "start":  packetstart, "end": cursor - 1, "start_abs": packetstart + offset, "end_abs": cursor - 1 + offset, "type": packettype, "value": value, "children": subpackets })
             packets.append(packet)
