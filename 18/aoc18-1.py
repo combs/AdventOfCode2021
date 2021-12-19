@@ -25,7 +25,7 @@ def split_first(tree):
         if item >= 10:
             left = int(item / 2.0)
             right = item - left
-            print("split",tree,"new vals",(left,right))
+            # print("split",tree,"new vals",(left,right))
             return ([left, right], True)
     else:
         for index, item in enumerate(tree.copy()):
@@ -37,47 +37,59 @@ def split_first(tree):
                 left = int(item / 2.0)
                 right = item - left
                 tree[index] = [left, right]
-                print("split",tree,"new vals",(left,right))
+                # print("split",tree,"new vals",(left,right))
                 return (tree, True)
 
     return tree, False
 
-def explode_first(tree, cursor=[0]):
+def explode_first(tree, cursor=[]):
     ourcursor = cursor.copy()
     # print("explode? considering",tree,"cursor",cursor, "cursor length",len(cursor))
-
-    thing = get_pos(tree, cursor)
-    if type(thing)==list:
-        if len(cursor) >= 4:
-            current_val = thing
-            print("exploding thing",thing,"at location",cursor)
-            if len(thing) > 2:
-                raise ValueError("Trying to explode >2 items")
-            left = find_neighbor_left(tree, cursor + [0])
-            right = find_neighbor_right(tree, cursor + [1])
-            replacement = []
-            if left != None:
-                leftval = get_pos(tree, left)
-                print("Found left neighbor",left,"leftval",leftval)
-                set_pos(tree, left, leftval + current_val[0])
+    if len(cursor)==0:
+        thing = tree
+    else:
+        thing = get_pos(tree, cursor)
+    # print("looking at", thing)
+    if type(thing) != int:
+        
+        for index, item in enumerate(thing):
+            # print("considering",item,"inside explode")
+            (tree, did_something) = explode_first(tree, cursor + [ index ] )
+            if did_something:
+                
+                return (tree, True)
             
-            if right != None:
-                rightval = get_pos(tree, right)
-                print("Found right neighbor",right,"rightval",rightval)
-                set_pos(tree, right, rightval + current_val[1])
-            
-            # tree.remove(thing)
-            set_pos(tree, cursor, 0)
+            if (len(cursor) >= 4) and len(thing) > 1 and (type(thing[0])==int and type(thing[1])==int):
+                
+                # print("exploding thing",thing,"at location",cursor)
+                if len(thing) > 2:
+                    raise ValueError("Trying to explode >2 items")
 
-            print("exploded a thing. final tree", tree)
-            return (tree, True)
-        else:
-            # print("cursor wasn't long enuff")
-            for index, item in enumerate(thing):
-                (tree, did_something) = explode_first(tree, cursor + [ index ] )
-                if did_something:
-                    # print("did something in child call")
-                    return (tree, True)
+                left = get_neighbor_left(tree, cursor + [0])
+                if left != None:
+                    leftval = get_pos(tree, left)
+                    # print("Found left neighbor",left,"leftval",leftval)
+                    set_pos(tree, left, leftval + thing[0])
+                
+                right = get_neighbor_right(tree, cursor + [1])
+                if right != None:
+                    rightval = get_pos(tree, right)
+                    # print("Found right neighbor",right,"rightval",rightval)
+                    set_pos(tree, right, rightval + thing[1])
+                
+                set_pos(tree, cursor, 0)
+
+                # print("exploded a thing. final tree", tree)
+                return (tree, True)
+    # else:
+    #     right = get_neighbor_right(tree, cursor)
+    #     print("found right neighbor", right)
+    #     if right != None:
+    #         print("trying to iterate into", right)
+    #         (tree, did_something) = explode_first(tree, right )
+    #         if did_something:
+    #             # print("did something in child call")
+    #             return (tree, True)
     
     return (tree, False)
         
@@ -85,12 +97,13 @@ def explode_first(tree, cursor=[0]):
 def get_pos(tree, target):
     # print("get_pos",tree,target)
     indices = target.copy()
-    if (type(tree)==int) and target==[0]:
+    if (type(tree)==int) and (target==[0]):
         return tree
     item = tree.copy()
 
     while len(indices):
         item = item[ indices.pop(0) ]
+    # print("got item",item)
     return item
 
 def set_pos(tree, target, val):
@@ -101,7 +114,7 @@ def set_pos(tree, target, val):
     item[indices[0]] = val
     return tree
 
-def find_neighbor_left(tree, target):
+def get_neighbor_left(tree, target):
     # pass in [0, 1, 2] to specify third child of second child of first child
     depth = len(target) - 1
     cursor = list(target)
@@ -111,7 +124,6 @@ def find_neighbor_left(tree, target):
         thing = None
         if cursor[depth] == -1:
             # print("Walking up a level")
-            cursor[depth] += 1
             depth -= 1
             cursor.pop()
             continue
@@ -120,21 +132,19 @@ def find_neighbor_left(tree, target):
             thing = get_pos(tree, cursor)
             # print("The new thing is", thing)
         except TypeError:
-            print("found an int? up one more level")
-            cursor[depth] += 1
+            # print("found an int? up one more level")
             depth -= 1
             cursor.pop()
             continue
         except ValueError:
-            print("got ValueError")
+            # print("got ValueError")
             continue
         except IndexError:
-            print("IndexError, why?")
+            # print("IndexError, why?")
             
             continue
         
         if type(thing) == list:
-            # recurse into it... somehow
             # print("recurse! cursor is", cursor, "length of cursor is",len(cursor),"and greatest depth is",get_greatest_depth(tree))
 
             cursor += [ len(thing) ] # start at rightmost pos of new branch 
@@ -144,12 +154,12 @@ def find_neighbor_left(tree, target):
             depth += 1
 
         else:
-            # print("left neighbor found", cursor)
+            # print("left neighbor found", cursor, "val", thing)
             return cursor
     return None
 
 
-def find_neighbor_right(tree, target):
+def get_neighbor_right(tree, target):
     # pass in [0, 1, 2] to specify third child of second child of first child
     depth = len(target) - 1
     cursor = list(target)
@@ -194,27 +204,52 @@ def find_neighbor_right(tree, target):
             depth += 1
 
         else:
-            print("right neighbor found", cursor)
+            # print("right neighbor found", cursor, "val", thing)
             return cursor
     return None
 
+# [[[[4, 0], [5, 4]], [[7, 7], [6, 0]]], [[7, 7], [[[3, 7], [4, 3]], [[6, 3], [8, 8]]]]]
 
+def get_first_int(tree):
+    if type(tree[0]) != int:
+        get_first_int(tree[0])
+    return tree[0]
 
+def get_last_int(tree):
+    if type(tree[-1]) != int:
+        get_first_int(tree[-1])
+    return tree[-1]
 
+def multiply_pairs(tree, left, right):
+    leftval = tree[0]
+    rightval = tree[1]
+
+    if type(tree[0])==list:
+        leftval = multiply_pairs(tree[0], left, right)
         
+    if type(tree[1])==list:
+        rightval = multiply_pairs(tree[1], left, right)
+    
+    return (leftval * left) + (rightval * right)
+
+def process_magnitude(snailfish):
+    return (multiply_pairs(snailfish, 3, 2))
 
 
 
 def process_snailfish(snailfish_additions):
 
-    snailfish = snailfish_additions.pop(0)
+    snailfish = None
 
     while len(snailfish_additions):
 
         print("snailfish before", snailfish)
-        snailfish = [ snailfish, snailfish_additions.pop(0) ]
+        if not snailfish:
+            snailfish = snailfish_additions.pop(0)
+        else:
+            snailfish = [ snailfish, snailfish_additions.pop(0) ]
 
-        print("snailfish after addition", snailfish)
+        print("SNAILFISH AFTER ADDITION", snailfish)
 
         did_something = True
 
@@ -223,13 +258,13 @@ def process_snailfish(snailfish_additions):
         while did_something == True:
             snailfish, did_something = explode_first(snailfish)
             if did_something:
-                print("did an explode")
-                continue
-            snailfish, did_something = split_first(snailfish)
-            if did_something:
-                print("did a split")
-                continue
+                print("did an explode", snailfish)
+            else:
+                snailfish, did_something = split_first(snailfish)
+                if did_something:
+                    print("did a split", snailfish)
         
+        print("SNAILFISH AFTER OPERATIONS:", snailfish)
 
     # while greatest_depth > 4 or any_val > 10
     #  check for depth > 4
@@ -245,20 +280,19 @@ def process_snailfish(snailfish_additions):
     #                 item = split(item)
     #         else:
     #             item = explode(item)
-    # print(find_neighbor_left(snailfish, [1]))
-    # print(find_neighbor_right(snailfish, [0]))
+    # print(get_neighbor_left(snailfish, [1]))
+    # print(get_neighbor_right(snailfish, [0]))
     # print(get_greatest_depth(snailfish), get_greatest_value(snailfish))
 
     print("final result", snailfish)
+    print("magnitude", process_magnitude(snailfish))
 
 
-with open("data.sample.txt", "r") as fh:
+with open("data.txt", "r") as fh:
     lines = fh.readlines()
 
 data = []
 for line in lines:
     data.append(json.loads(line))
-    # print()
-
-# print(set_pos( [ [ [ 3, 3], [2, 2]], [4, 4]], [0,0,0] , 17))
+    
 process_snailfish(data)
