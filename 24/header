@@ -1,0 +1,33 @@
+# cython: language_level=3,infer_types=False
+
+from tqdm import tqdm
+import sys
+
+def do_it():
+    cdef long long largest, number
+    cdef long long w, x, y, z
+    cdef list input_values
+
+    with open("data.txt", "r") as fh:
+        instructions = fh.readlines()
+
+    largest = 0
+
+    for number in tqdm(range(100000000000000,11111111111111,-1)):
+        if '0' in str(number):
+            continue
+        remainder = attempt(str(number))
+
+        if remainder == 0:
+            # valid
+            largest = number
+            print("solved",number)
+            sys.exit(0)
+
+
+def attempt(number):
+    cdef long long w, x, y, z
+    cdef int input_pos
+
+    input_pos = 0
+    w, x, y, z = 0, 0, 0, 0
